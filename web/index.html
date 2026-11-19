@@ -1,33 +1,49 @@
 <!doctype html>
 <html lang="en-CA">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="{{DESCRIPTION}}">
-  <title>{{TITLE}} · CoolCode</title>
-  <link rel="stylesheet" href="./style.css">
-  <script type="module" src="./app.mjs"></script>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="{{DESCRIPTION}}"><title>{{TITLE}} · CoolCode</title>
+  <link rel="stylesheet" href="./style.css"><script type="module" src="./app.mjs"></script>
 </head>
 <body data-tool-id="{{TOOL_ID}}">
-  <a class="skip" href="#main">Skip to content</a>
-  <header><a href="https://coolcode.ca/">← CoolCode.ca</a><a href="{{SOURCE_URL}}">Source &amp; instructions ↗</a></header>
+  <a class="skip" href="#main">Skip to comparison</a>
+  <header><nav><a href="https://coolcode.ca/">← CoolCode</a><a href="{{SOURCE_URL}}">Project source ↗</a></nav></header>
   <main id="main">
-    <p class="eyebrow">Browser tool starter</p>
-    <h1>{{TITLE}}</h1>
-    <p class="intro">{{DESCRIPTION}}</p>
-    <section aria-labelledby="example-title">
-      <h2 id="example-title">Clean a list</h2>
-      <p>Trim spaces, skip blank lines and remove exact duplicates. Capitalization stays distinct.</p>
-      <div class="panels">
-        <div><label for="input">Your lines</label><textarea id="input" rows="10" maxlength="100000" spellcheck="false" placeholder="Paste one item per line"></textarea></div>
-        <div><label for="output">Cleaned lines</label><textarea id="output" rows="10" readonly spellcheck="false"></textarea></div>
+    <div class="mast"><div><h1>{{TITLE}}</h1><p>How much sunlight reaches a square metre in Langley and Halifax?</p></div><div class="mark" aria-hidden="true">☀</div></div>
+    <p id="load" role="status">Loading the NASA POWER record…</p>
+    <noscript>Enable JavaScript for the comparison or read the <a href="./data/solar.json">monthly data</a>.</noscript>
+    <div id="work" hidden>
+      <div class="controls">
+        <label>Comparison period<select id="period"></select></label>
+        <label>Inspect month<select id="month"></select></label>
+        <label class="switch"><input id="benchmark" type="checkbox" checked> Show clear-sky benchmark</label>
       </div>
-      <div class="actions"><button id="sample" type="button">Load example</button><button id="clear" type="button">Clear</button><button id="copy" type="button" hidden>Copy result</button></div>
-      <p id="status" role="status" aria-live="polite">Paste a list to begin.</p>
-      <noscript><p>This tool needs JavaScript to process your text. The source is available above.</p></noscript>
-    </section>
-    <aside aria-label="Privacy"><strong>Stays on your device.</strong> This example makes no API requests and does not save your text. Reloading clears it.</aside>
+      <div class="spread">
+        <section class="plot" aria-labelledby="plot-title"><h2 id="plot-title">Solar energy through the year</h2>
+          <p id="period-note"></p>
+          <div class="legend"><span><i class="west"></i>Langley, BC</span><span><i class="east"></i>Halifax, NS</span><span id="marker-key"><i class="cap"></i>Clear-sky estimate</span></div>
+          <p class="axis">Daily energy · kWh/m²/day</p>
+          <div id="chart"></div>
+          <p class="tip">Select a month on the chart or use the month menu to see its values.</p>
+        </section>
+        <section class="reading" aria-labelledby="chosen"><p class="kicker" id="read-period"></p><h2 id="chosen"></h2>
+          <p class="measure">Mean daily energy · kWh/m²/day</p>
+          <div class="city"><h3><i class="west"></i> Langley <small>BC</small></h3><strong id="langley"></strong><p class="reference" id="langley-ref"></p></div>
+          <div class="city"><h3><i class="east"></i> Halifax <small>NS</small></h3><strong id="halifax"></strong><p class="reference" id="halifax-ref"></p></div>
+          <p id="difference" aria-live="polite"></p>
+        </section>
+      </div>
+      <section class="records"><h2>Read the ledger</h2>
+        <details><summary id="month-summary">Monthly values by year</summary><div class="tablewrap"><table><caption id="table-caption"></caption><thead id="thead"></thead><tbody id="history"></tbody></table></div></details>
+        <details><summary>Annual means by year</summary><div class="tablewrap"><table><caption>Daily energy averaged over each full calendar year, weighted by days per month (kWh/m²/day).</caption><thead id="annual-head"></thead><tbody id="annual"></tbody></table></div></details>
+      </section>
+      <section class="methods"><h2>About the readings</h2><div>
+        <p>NASA POWER estimates incoming sunlight on a horizontal surface. All-sky energy includes clouds. The clear-sky benchmark estimates the energy that would reach that surface under cloud-free conditions.</p>
+        <p>Each point represents a grid area around the city. Rooftop yield also depends on panel angle, efficiency, shading and snow. The 2001–2020 comparison averages the 20 values for each calendar month, giving each year equal weight.</p>
+        <p id="coverage"></p><p class="links"><a id="west-source">Langley API ↗</a><a id="east-source">Halifax API ↗</a><a href="https://power.larc.nasa.gov/docs/services/api/temporal/monthly/">NASA methodology ↗</a><a href="./data/solar.json">Snapshot JSON</a></p>
+      </div></section>
+    </div>
   </main>
-  <footer>Part of <a href="https://coolcode.ca/">the CoolCode collection</a>.</footer>
+  <footer><span>Sun Ledger</span><a href="https://coolcode.ca/">CoolCode.ca</a></footer>
 </body>
 </html>

@@ -1,7 +1,8 @@
-"""Exercise the built starter at a project subpath in Chromium."""
+"""Exercise the solar ledger at a project subpath in Chromium."""
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+import os
 import shutil
 import tempfile
 import threading
@@ -24,27 +25,38 @@ def main():
         threading.Thread(target=server.serve_forever, daemon=True).start()
         try:
             with sync_playwright() as p:
-                browser = p.chromium.launch()
+                browser = p.chromium.launch(executable_path=os.environ.get("CHROMIUM_BIN"))
                 page = browser.new_page(viewport={"width": 1280, "height": 1000})
                 errors = []
                 page.on("pageerror", lambda error: errors.append(str(error)))
                 page.goto(f"http://127.0.0.1:{server.server_port}/example-tool/")
-                page.locator("#sample").click()
-                assert page.locator("#output").input_value() == "Halifax\nLangley\nVancouver"
-                assert "1 duplicate removed" in page.locator("#status").inner_text()
-                page.locator("#input").fill('<img src=x onerror="alert(1)">\n<img src=x onerror="alert(1)">')
-                assert page.locator("#output").input_value() == '<img src=x onerror="alert(1)">'
-                assert page.locator("img").count() == 0
-                page.locator("#clear").click()
-                assert page.locator("#output").input_value() == ""
-                page.locator("#sample").click()
-                page.screenshot(path=str(screenshots / "desktop.png"), full_page=True)
-                page.set_viewport_size({"width": 390, "height": 844})
-                assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-                page.screenshot(path=str(screenshots / "mobile.png"), full_page=True)
+                page.locator('#work').wait_for(state='visible')
+                assert page.locator('#chosen').inner_text() == 'December'
+                assert page.locator('#langley').inner_text() == '0.68'
+                assert page.locator('#halifax').inner_text() == '1.14'
+                page.locator('#month').select_option('6')
+                assert page.locator('#langley').inner_text() == '5.52'
+                assert page.locator('#halifax').inner_text() == '5.53'
+                page.locator('#period').select_option('2024')
+                assert page.locator('#langley').inner_text() != '5.52'
+                page.locator('#benchmark').uncheck()
+                assert not page.locator('#langley-ref').is_visible()
+                page.locator('#month-summary').click()
+                assert page.locator('#history tr.current th').inner_text() == '2024'
+                assert page.locator('#history tr.current td').first.inner_text() == page.locator('#langley').inner_text()
+                page.locator('#month-summary').click()
+                page.locator('#benchmark').check()
+                page.locator('#period').select_option('2001–2020')
+                page.locator('#month').select_option('12')
+                page.screenshot(path=str(screenshots / 'desktop.png'), full_page=True)
+                page.set_viewport_size({'width': 375, 'height': 812})
+                assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+                page.locator('#chart rect[cursor]').nth(5).click()
+                assert page.locator('#chosen').inner_text() == 'June'
+                page.screenshot(path=str(screenshots / 'mobile.png'), full_page=True)
                 assert not errors, errors
                 browser.close()
-            print("Browser checks passed: project subpath, sample, clear, safe text and mobile layout")
+            print("Browser checks passed: month, year, benchmark, source rows and mobile chart")
         finally:
             server.shutdown()
 

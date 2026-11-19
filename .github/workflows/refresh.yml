@@ -1,0 +1,47 @@
+name: Refresh NASA solar record
+on:
+  schedule:
+    - cron: '36 14 7 * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['scripts/refresh.py', '.github/workflows/refresh.yml']
+permissions:
+  contents: read
+concurrency:
+  group: refresh-nasa-power
+  cancel-in-progress: false
+jobs:
+  refresh:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - run: python3 scripts/refresh.py
+      - run: python3 -m unittest discover -s tests -v
+      - run: node --test tests/*.test.mjs
+      - run: python3 scripts/build.py
+      - name: Commit validated edition and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! git diff --quiet -- web/data/solar.json; then
+            git add web/data/solar.json
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Refresh NASA POWER solar record'
+            git push origin HEAD:main
+            gh workflow run pages.yml --ref main
+          elif [ "$GITHUB_RUN_ATTEMPT" -gt 1 ]; then
+            gh workflow run pages.yml --ref main
+          fi

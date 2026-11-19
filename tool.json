@@ -1,16 +1,49 @@
 {
-  "id": "coolcode-tool-template",
-  "title": "CoolCode Tool Starter",
-  "description": "A browser-only example that trims lines and removes exact duplicates.",
-  "category": "security",
-  "tags": ["text", "lines", "duplicates"],
-  "icon": "scan-search",
-  "url": "/coolcode-tool-template/",
-  "source": "https://github.com/jsdyer/coolcode-tool-template",
+  "id": "sunledger",
+  "title": "Sun Ledger",
+  "description": "Compare the solar energy reaching Langley and Halifax by month and year, alongside NASA’s clear-sky estimate.",
+  "category": "field-kit",
+  "tags": [
+    "solar energy",
+    "NASA POWER",
+    "Langley",
+    "Halifax",
+    "sunlight",
+    "climate"
+  ],
+  "icon": "lightbulb",
+  "url": "/sunledger/",
+  "source": "https://github.com/jsdyer/sunledger",
   "hosting": "project",
   "access": "browser",
   "data_info": {
-    "mode": "local",
-    "detail": "The browser reads the text you paste and compares its lines."
+    "mode": "snapshot",
+    "detail": "NASA POWER supplies monthly all-sky and clear-sky solar energy for grid areas around Langley, BC, and Halifax, NS.",
+    "cadence": "Monthly",
+    "probes": [
+      {
+        "label": "Data retrieved",
+        "url": "https://coolcode.ca/sunledger/data/solar.json",
+        "path": [
+          "retrieved"
+        ],
+        "count_at": {
+          "path": [
+            "count"
+          ],
+          "unit": "paired months"
+        }
+      },
+      {
+        "label": "Solar record",
+        "url": "https://coolcode.ca/sunledger/data/solar.json",
+        "path": [
+          "start"
+        ],
+        "end_path": [
+          "end"
+        ]
+      }
+    ]
   }
 }
