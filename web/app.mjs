@@ -1,13 +1,22 @@
-import { annualDaily, baseline, format, monthOf, months, seriesFor, yearOf } from './model.mjs';
+import {
+  annualDaily,
+  baseline,
+  format,
+  monthOf,
+  months,
+  seriesFor,
+  yearOf,
+} from './model.mjs';
 
-const byId = id => document.getElementById(id);
+const byId = (id) => document.getElementById(id);
 const colours = ['#a64820', '#246b65'];
 let edition;
 let years;
 
 function svgElement(tag, attributes, parent, text) {
   const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [key, value] of Object.entries(attributes)) node.setAttribute(key, value);
+  for (const [key, value] of Object.entries(attributes))
+    node.setAttribute(key, value);
   if (text !== undefined) node.textContent = text;
   parent.append(node);
   return node;
@@ -17,48 +26,141 @@ function drawChart(series, selected, showClear) {
   const host = byId('chart');
   host.replaceChildren();
   const width = Math.max(295, Math.round(host.clientWidth));
-  const left = 27, right = 5, top = 12;
+  const left = 27,
+    right = 5,
+    top = 12;
   const height = width < 440 ? 216 : 270;
   const bottom = height - 31;
   const step = (width - left - right) / 12;
-  const bar = Math.min(20, step * .30);
+  const bar = Math.min(20, step * 0.3);
   const peak = Math.max(...series.filter(Boolean).flat());
   const ceiling = Math.max(10, Math.ceil(peak / 2) * 2);
-  const y = value => bottom - value / ceiling * (bottom - top);
-  const chart = svgElement('svg', { viewBox: `0 0 ${width} ${height}`, role: 'img',
-    'aria-label': 'Monthly all-sky energy at both cities. Exact values are available using the month menu.' }, host);
-  svgElement('rect', { x: left + selected * step + 1, y: top - 3, width: step - 2, height: height - top - 1, fill: '#eee6d5' }, chart);
+  const y = (value) => bottom - (value / ceiling) * (bottom - top);
+  const chart = svgElement(
+    'svg',
+    {
+      viewBox: `0 0 ${width} ${height}`,
+      role: 'img',
+      'aria-label':
+        'Monthly all-sky energy at both cities. Exact values are available using the month menu.',
+    },
+    host,
+  );
+  svgElement(
+    'rect',
+    {
+      x: left + selected * step + 1,
+      y: top - 3,
+      width: step - 2,
+      height: height - top - 1,
+      fill: '#eee6d5',
+    },
+    chart,
+  );
   for (let tick = 0; tick <= ceiling; tick += 2) {
-    svgElement('line', { x1: left, y1: y(tick), x2: width-right, y2: y(tick), stroke: '#c8c2b3', 'stroke-width': .8 }, chart);
-    svgElement('text', { x: left - 6, y: y(tick) + 4, 'text-anchor': 'end', 'font-size': 12 }, chart, String(tick));
+    svgElement(
+      'line',
+      {
+        x1: left,
+        y1: y(tick),
+        x2: width - right,
+        y2: y(tick),
+        stroke: '#c8c2b3',
+        'stroke-width': 0.8,
+      },
+      chart,
+    );
+    svgElement(
+      'text',
+      { x: left - 6, y: y(tick) + 4, 'text-anchor': 'end', 'font-size': 12 },
+      chart,
+      String(tick),
+    );
   }
   series.forEach((row, index) => {
-    const mid = left + (index + .5) * step;
+    const mid = left + (index + 0.5) * step;
     if (row) {
       colours.forEach((colour, city) => {
         const x = mid + (city ? 1 : -bar - 1);
         const value = row[city * 2];
-        svgElement('rect', { x, y: y(value), width: bar, height: bottom - y(value), fill: colour }, chart);
+        svgElement(
+          'rect',
+          {
+            x,
+            y: y(value),
+            width: bar,
+            height: bottom - y(value),
+            fill: colour,
+          },
+          chart,
+        );
         if (showClear) {
           const ref = y(row[city * 2 + 1]);
-          svgElement('line', { x1: x, x2: x + bar, y1: ref, y2: ref, stroke: colour, 'stroke-width': 3 }, chart);
+          svgElement(
+            'line',
+            {
+              x1: x,
+              x2: x + bar,
+              y1: ref,
+              y2: ref,
+              stroke: colour,
+              'stroke-width': 3,
+            },
+            chart,
+          );
         }
       });
     }
-    svgElement('text', { x: mid, y: height - 8, 'text-anchor': 'middle', 'font-size': width < 445 ? 11 : 13,
-      'font-weight': index === selected ? 750 : 450 }, chart, months[index].slice(0, width < 420 ? 1 : 3));
-    const hit = svgElement('rect', { x: left + index * step, y: top, width: step, height: height-top, fill: 'transparent', cursor: 'pointer' }, chart);
-    svgElement('title', {}, hit, row
-      ? `${months[index]} · Langley ${format(row[0])}, Halifax ${format(row[2])} kWh/m²/day`
-      : `${months[index]} · Not available`);
-    hit.addEventListener('click', () => { byId('month').value = index + 1; render(); });
+    svgElement(
+      'text',
+      {
+        x: mid,
+        y: height - 8,
+        'text-anchor': 'middle',
+        'font-size': width < 445 ? 11 : 13,
+        'font-weight': index === selected ? 750 : 450,
+      },
+      chart,
+      months[index].slice(0, width < 420 ? 1 : 3),
+    );
+    const hit = svgElement(
+      'rect',
+      {
+        x: left + index * step,
+        y: top,
+        width: step,
+        height: height - top,
+        fill: 'transparent',
+        cursor: 'pointer',
+      },
+      chart,
+    );
+    svgElement(
+      'title',
+      {},
+      hit,
+      row
+        ? `${months[index]} · Langley ${format(row[0])}, Halifax ${format(row[2])} kWh/m²/day`
+        : `${months[index]} · Not available`,
+    );
+    hit.addEventListener('click', () => {
+      byId('month').value = index + 1;
+      render();
+    });
   });
 }
 
 function tableHeading(id, clear) {
   const tr = document.createElement('tr');
-  for (const label of clear ? ['Year', 'Langley all-sky', 'Langley clear-sky', 'Halifax all-sky', 'Halifax clear-sky']
-                            : ['Year', 'Langley all-sky', 'Halifax all-sky']) {
+  for (const label of clear
+    ? [
+        'Year',
+        'Langley all-sky',
+        'Langley clear-sky',
+        'Halifax all-sky',
+        'Halifax clear-sky',
+      ]
+    : ['Year', 'Langley all-sky', 'Halifax all-sky']) {
     const cell = document.createElement('th');
     cell.scope = 'col';
     cell.textContent = label;
@@ -93,34 +195,58 @@ function render() {
   const series = seriesFor(edition.rows, period);
   const values = series[index];
   const label = period === baseline ? baseline + ' average' : period;
-  byId('period-note').textContent = period === baseline ? 'Average for each month, 2001–2020.' :
-    `Monthly averages for ${period} · ${series.filter(Boolean).length} of 12 months available.`;
+  byId('period-note').textContent =
+    period === baseline
+      ? 'Average for each month, 2001–2020.'
+      : `Monthly averages for ${period} · ${series.filter(Boolean).length} of 12 months available.`;
   byId('read-period').textContent = label;
   byId('chosen').textContent = months[index];
   byId('marker-key').hidden = !clear;
   drawChart(series, index, clear);
-  for (const [city, offset] of [['langley', 0], ['halifax', 2]]) {
+  for (const [city, offset] of [
+    ['langley', 0],
+    ['halifax', 2],
+  ]) {
     byId(city).textContent = format(values?.[offset]);
-    const ref = byId(city+'-ref');
+    const ref = byId(city + '-ref');
     ref.hidden = !clear;
     ref.textContent = 'Clear sky ' + format(values?.[offset + 1]);
   }
   if (values && Math.min(values[0], values[2]) > 0) {
-    const ratio = Math.max(values[0], values[2]) / Math.min(values[0], values[2]);
+    const ratio =
+      Math.max(values[0], values[2]) / Math.min(values[0], values[2]);
     const difference = Math.round((ratio - 1) * 100);
     const brighter = values[0] > values[2] ? 'Langley' : 'Halifax';
     byId('difference').textContent = difference
       ? `${brighter} receives about ${difference}% more all-sky energy per day this month.`
       : 'All-sky daily energy differs by less than 1% between the two cities.';
   } else {
-    byId('difference').textContent = values ? 'A percentage comparison needs two positive values.' : 'Paired estimates are unavailable for this month.';
+    byId('difference').textContent = values
+      ? 'A percentage comparison needs two positive values.'
+      : 'Paired estimates are unavailable for this month.';
   }
   byId('month-summary').textContent = `${months[index]} values by year`;
-  byId('table-caption').textContent = `${months[index]} daily mean energy at both locations (kWh/m²/day). Dashes mark missing months.`;
+  byId('table-caption').textContent =
+    `${months[index]} daily mean energy at both locations (kWh/m²/day). Dashes mark missing months.`;
   tableHeading('thead', clear);
   tableHeading('annual-head', clear);
-  tableBody('history', years.map(year => [year, edition.rows.find(r => yearOf(r) === year && monthOf(r) === index+1)?.slice(1)]), period, clear);
-  tableBody('annual', years.map(year => [year, annualDaily(edition.rows, year)]), period, clear);
+  tableBody(
+    'history',
+    years.map((year) => [
+      year,
+      edition.rows
+        .find((r) => yearOf(r) === year && monthOf(r) === index + 1)
+        ?.slice(1),
+    ]),
+    period,
+    clear,
+  );
+  tableBody(
+    'annual',
+    years.map((year) => [year, annualDaily(edition.rows, year)]),
+    period,
+    clear,
+  );
 }
 
 async function start() {
@@ -130,28 +256,38 @@ async function start() {
   years = [...new Set(edition.rows.map(yearOf))].reverse();
   byId('period').add(new Option(baseline + ' average', baseline));
   for (const year of years) byId('period').add(new Option(String(year), year));
-  months.forEach((name, i) => byId('month').add(new Option(name, i+1)));
+  months.forEach((name, i) => byId('month').add(new Option(name, i + 1)));
   byId('month').value = 12;
   byId('period').addEventListener('change', () => {
     const series = seriesFor(edition.rows, byId('period').value);
-    if (!series[Number(byId('month').value) - 1]) byId('month').value = series.findLastIndex(Boolean) + 1;
+    if (!series[Number(byId('month').value) - 1])
+      byId('month').value = series.findLastIndex(Boolean) + 1;
     render();
   });
   byId('month').addEventListener('change', render);
   byId('benchmark').addEventListener('change', render);
-  for (const [id, site] of [['west-source','Langley'], ['east-source','Halifax']]) byId(id).href = edition.sources[site].url;
-  byId('coverage').textContent = `${edition.count} paired months from ${edition.start.slice(0,7)} through ${edition.end.slice(0,7)}. Retrieved ${edition.retrieved}. The archive updates monthly. Annual means appear after both locations have all 12 months.`;
+  for (const [id, site] of [
+    ['west-source', 'Langley'],
+    ['east-source', 'Halifax'],
+  ])
+    byId(id).href = edition.sources[site].url;
+  byId('coverage').textContent =
+    `${edition.count} paired months from ${edition.start.slice(0, 7)} through ${edition.end.slice(0, 7)}. Retrieved ${edition.retrieved}. The archive updates monthly. Annual means appear after both locations have all 12 months.`;
   byId('load').hidden = true;
   byId('work').hidden = false;
   render();
   let previousWidth = byId('chart').clientWidth;
   new ResizeObserver(() => {
     const current = byId('chart').clientWidth;
-    if (current !== previousWidth) { previousWidth = current; render(); }
+    if (current !== previousWidth) {
+      previousWidth = current;
+      render();
+    }
   }).observe(byId('chart'));
 }
 
 start().catch(() => {
   byId('load').hidden = false;
-  byId('load').textContent = 'The solar record could not be loaded. Reload the page to try again.';
+  byId('load').textContent =
+    'The solar record could not be loaded. Reload the page to try again.';
 });

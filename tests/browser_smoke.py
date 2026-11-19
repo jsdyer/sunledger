@@ -45,6 +45,9 @@ def main():
                 assert page.locator('#history tr.current th').inner_text() == '2024'
                 assert page.locator('#history tr.current td').first.inner_text() == page.locator('#langley').inner_text()
                 page.locator('#month-summary').click()
+                page.get_by_text('Annual means by year', exact=True).click()
+                assert page.locator('#annual tr.current td').first.inner_text() != '—'
+                page.get_by_text('Annual means by year', exact=True).click()
                 page.locator('#benchmark').check()
                 page.locator('#period').select_option('2001–2020')
                 page.locator('#month').select_option('12')
