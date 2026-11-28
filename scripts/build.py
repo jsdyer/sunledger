@@ -8,6 +8,8 @@ import shutil
 import tempfile
 from urllib.parse import urlsplit
 
+from cities import city_pages
+
 ROOT = Path(__file__).resolve().parents[1]
 SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 
@@ -15,8 +17,10 @@ SLUG = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
 def metadata(root=ROOT):
     tool = json.loads((root / "tool.json").read_text(encoding="utf-8"))
     required = {"id", "title", "description", "category", "tags", "icon", "url", "source", "hosting", "access", "data_info"}
-    if not isinstance(tool, dict) or set(tool) != required:
+    if not isinstance(tool, dict) or set(tool) != required | {"result_directory"}:
         raise ValueError("tool.json has missing or unknown fields")
+    if tool["result_directory"].get("path") != "cities/" or not tool["result_directory"].get("title"):
+        raise ValueError("Expected the solar city directory")
     for key in required - {"tags", "data_info"}:
         if not isinstance(tool[key], str) or not tool[key].strip():
             raise ValueError(f"tool.json: {key} must be a nonempty string")
@@ -61,6 +65,7 @@ def build(root=ROOT):
         if re.search(r"\{\{[A-Z_]+\}\}", page):
             raise ValueError("Unresolved template placeholder in web/index.html")
         index.write_text(page, encoding="utf-8")
+        city_pages(stage, json.loads((stage / "data/solar.json").read_text()))
         (stage / ".nojekyll").touch()
         if output.exists():
             shutil.rmtree(output)

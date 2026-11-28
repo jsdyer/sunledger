@@ -32,18 +32,18 @@ def main():
                 page.goto(f"http://127.0.0.1:{server.server_port}/example-tool/")
                 page.locator('#work').wait_for(state='visible')
                 assert page.locator('#chosen').inner_text() == 'December'
-                assert page.locator('#langley').inner_text() == '0.68'
-                assert page.locator('#halifax').inner_text() == '1.14'
+                assert page.locator('#first-energy').inner_text() == '0.68'
+                assert page.locator('#second-energy').inner_text() == '1.14'
                 page.locator('#month').select_option('6')
-                assert page.locator('#langley').inner_text() == '5.52'
-                assert page.locator('#halifax').inner_text() == '5.53'
+                assert page.locator('#first-energy').inner_text() == '5.52'
+                assert page.locator('#second-energy').inner_text() == '5.53'
                 page.locator('#period').select_option('2024')
-                assert page.locator('#langley').inner_text() != '5.52'
+                assert page.locator('#first-energy').inner_text() != '5.52'
                 page.locator('#benchmark').uncheck()
-                assert not page.locator('#langley-ref').is_visible()
+                assert not page.locator('#first-energy-ref').is_visible()
                 page.locator('#month-summary').click()
                 assert page.locator('#history tr.current th').inner_text() == '2024'
-                assert page.locator('#history tr.current td').first.inner_text() == page.locator('#langley').inner_text()
+                assert page.locator('#history tr.current td').first.inner_text() == page.locator('#first-energy').inner_text()
                 page.locator('#month-summary').click()
                 page.get_by_text('Annual means by year', exact=True).click()
                 assert page.locator('#annual tr.current td').first.inner_text() != '—'
@@ -57,6 +57,22 @@ def main():
                 page.locator('#chart rect[cursor]').nth(5).click()
                 assert page.locator('#chosen').inner_text() == 'June'
                 page.screenshot(path=str(screenshots / 'mobile.png'), full_page=True)
+                page.locator('#first').select_option('Winnipeg')
+                page.locator('#second').select_option('Toronto')
+                page.locator('#month').select_option('12')
+                assert page.locator('#first-energy').inner_text() == '1.00'
+                assert page.locator('#second-energy').inner_text() == '1.17'
+                assert page.locator('#first-profile').get_attribute('href') == './cities/winnipeg/'
+                assert 'Toronto' in page.locator('#thead').text_content()
+                assert 'first=winnipeg' in page.url
+                page.reload()
+                page.locator('#work').wait_for(state='visible')
+                assert page.locator('#first-energy').inner_text() == '1.00'
+                page.locator('#first-profile').click()
+                page.get_by_role('heading', name='Monthly solar energy in Winnipeg, Manitoba').wait_for()
+                page.get_by_role('link', name='See this month in the chart').click()
+                page.locator('#work').wait_for(state='visible')
+                assert page.locator('#first').input_value() == 'Winnipeg'
                 assert not errors, errors
                 browser.close()
             print("Browser checks passed: month, year, benchmark, source rows and mobile chart")

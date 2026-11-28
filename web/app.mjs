@@ -12,6 +12,35 @@ const byId = (id) => document.getElementById(id);
 const colours = ['#a64820', '#246b65'];
 let edition;
 let years;
+let comparisonRows;
+let cities;
+
+function selectCities() {
+  cities = [byId('first').value, byId('second').value];
+  const columns = cities.map(name => edition.columns.indexOf(edition.sources[name].slug + '_all'));
+  comparisonRows = edition.rows.map(row => [row[0], ...columns.flatMap(i => row.slice(i, i + 2))]);
+  cities.forEach((name, index) => {
+    const side = index === 0 ? 'first' : 'second';
+    const site = edition.sources[name];
+    byId(side + '-legend').textContent = name;
+    const profile = byId(side + '-profile');
+    profile.textContent = name;
+    profile.href = './cities/' + site.slug + '/';
+    const source = byId(index === 0 ? 'west-source' : 'east-source');
+    source.href = site.url;
+    source.textContent = name + ' NASA data ↗';
+  });
+}
+
+function rememberSelection() {
+  const url = new URL(location.href);
+  url.searchParams.set('first', edition.sources[cities[0]].slug);
+  url.searchParams.set('second', edition.sources[cities[1]].slug);
+  url.searchParams.set('month', byId('month').value);
+  url.searchParams.set('period', byId('period').value);
+  history.replaceState(null, '', url);
+}
+
 
 function svgElement(tag, attributes, parent, text) {
   const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -140,27 +169,23 @@ function drawChart(series, selected, showClear) {
       {},
       hit,
       row
-        ? `${months[index]} · Langley ${format(row[0])}, Halifax ${format(row[2])} kWh/m²/day`
+        ? `${months[index]} · ${cities[0]} ${format(row[0])}, ${cities[1]} ${format(row[2])} kWh/m²/day`
         : `${months[index]} · Not available`,
     );
     hit.addEventListener('click', () => {
       byId('month').value = index + 1;
       render();
+      rememberSelection();
     });
   });
 }
 
 function tableHeading(id, clear) {
   const tr = document.createElement('tr');
-  for (const label of clear
-    ? [
-        'Year',
-        'Langley all-sky',
-        'Langley clear-sky',
-        'Halifax all-sky',
-        'Halifax clear-sky',
-      ]
-    : ['Year', 'Langley all-sky', 'Halifax all-sky']) {
+  const labels = cities.flatMap(name => clear
+    ? [name + ' all-sky', name + ' clear-sky']
+    : [name + ' all-sky']);
+  for (const label of ['Year', ...labels]) {
     const cell = document.createElement('th');
     cell.scope = 'col';
     cell.textContent = label;
@@ -192,7 +217,7 @@ function render() {
   const period = byId('period').value;
   const index = Number(byId('month').value) - 1;
   const clear = byId('benchmark').checked;
-  const series = seriesFor(edition.rows, period);
+  const series = seriesFor(comparisonRows, period);
   const values = series[index];
   const label = period === baseline ? baseline + ' average' : period;
   byId('period-note').textContent =
@@ -204,8 +229,8 @@ function render() {
   byId('marker-key').hidden = !clear;
   drawChart(series, index, clear);
   for (const [city, offset] of [
-    ['langley', 0],
-    ['halifax', 2],
+    ['first-energy', 0],
+    ['second-energy', 2],
   ]) {
     byId(city).textContent = format(values?.[offset]);
     const ref = byId(city + '-ref');
@@ -216,7 +241,7 @@ function render() {
     const ratio =
       Math.max(values[0], values[2]) / Math.min(values[0], values[2]);
     const difference = Math.round((ratio - 1) * 100);
-    const brighter = values[0] > values[2] ? 'Langley' : 'Halifax';
+    const brighter = values[0] > values[2] ? cities[0] : cities[1];
     byId('difference').textContent = difference
       ? `${brighter} receives about ${difference}% more all-sky energy per day this month.`
       : 'All-sky daily energy differs by less than 1% between the two cities.';
@@ -234,7 +259,7 @@ function render() {
     'history',
     years.map((year) => [
       year,
-      edition.rows
+      comparisonRows
         .find((r) => yearOf(r) === year && monthOf(r) === index + 1)
         ?.slice(1),
     ]),
@@ -243,7 +268,7 @@ function render() {
   );
   tableBody(
     'annual',
-    years.map((year) => [year, annualDaily(edition.rows, year)]),
+    years.map((year) => [year, annualDaily(comparisonRows, year)]),
     period,
     clear,
   );
@@ -257,20 +282,42 @@ async function start() {
   byId('period').add(new Option(baseline + ' average', baseline));
   for (const year of years) byId('period').add(new Option(String(year), year));
   months.forEach((name, i) => byId('month').add(new Option(name, i + 1)));
-  byId('month').value = 12;
-  byId('period').addEventListener('change', () => {
-    const series = seriesFor(edition.rows, byId('period').value);
+  const query = new URLSearchParams(location.search);
+  const names = Object.keys(edition.sources);
+  for (const [index, side] of ['first', 'second'].entries()) {
+    const select = byId(side);
+    for (const name of [...names].sort((a,b) => a.localeCompare(b)))
+      select.add(new Option(name + ', ' + edition.sources[name].province, name));
+    select.value = names.find(name => edition.sources[name].slug === query.get(side))
+      || (index === 0 ? 'Langley' : 'Halifax');
+    select.addEventListener('change', () => {
+      const other = byId(index === 0 ? 'second' : 'first');
+      if (other.value === select.value) other.value = cities[index];
+      selectCities();
+      render();
+      rememberSelection();
+    });
+  }
+  if (byId('first').value === byId('second').value)
+    byId('second').value = names.find(name => name !== byId('first').value);
+  selectCities();
+  byId('period').value = years.includes(Number(query.get('period'))) ? query.get('period') : baseline;
+  const requestedMonth = Number(query.get('month'));
+  byId('month').value = requestedMonth >= 1 && requestedMonth <= 12 && Number.isInteger(requestedMonth)
+    ? requestedMonth : 12;
+  const chooseAvailableMonth = () => {
+    const series = seriesFor(comparisonRows, byId('period').value);
     if (!series[Number(byId('month').value) - 1])
       byId('month').value = series.findLastIndex(Boolean) + 1;
+  };
+  chooseAvailableMonth();
+  byId('period').addEventListener('change', () => {
+    chooseAvailableMonth();
     render();
+    rememberSelection();
   });
-  byId('month').addEventListener('change', render);
+  byId('month').addEventListener('change', () => { render(); rememberSelection(); });
   byId('benchmark').addEventListener('change', render);
-  for (const [id, site] of [
-    ['west-source', 'Langley'],
-    ['east-source', 'Halifax'],
-  ])
-    byId(id).href = edition.sources[site].url;
   byId('coverage').textContent =
     `${edition.count} paired months from ${edition.start.slice(0, 7)} through ${edition.end.slice(0, 7)}. Retrieved ${edition.retrieved}. The archive updates monthly. Annual means appear after both locations have all 12 months.`;
   byId('load').hidden = true;

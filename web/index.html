@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="description" content="{{DESCRIPTION}}" />
-    <title>Langley and Halifax Solar Energy Comparison · CoolCode</title>
+    <title>Monthly Solar Energy by Canadian City · CoolCode</title>
     <link rel="stylesheet" href="./style.css" />
     <script type="module" src="./app.mjs"></script>
   <script defer src="/assets/tool-metrics.js" referrerpolicy="no-referrer"></script>
@@ -22,10 +22,11 @@
       <div class="mast">
         <div>
           <h1>{{TITLE}}</h1>
-          <p>Which city gets more sunlight in winter? Select a month on the chart to compare NASA’s estimates for Langley and Halifax in kilowatt-hours per square metre per day.</p>
+          <p>How much solar energy reaches your city in winter? Choose two Canadian cities and a month to compare sunlight reaching a horizontal square metre.</p>
         </div>
         <div class="mark" aria-hidden="true">☀</div>
       </div>
+      <p><a href="./cities/">Browse monthly solar profiles by city →</a></p>
       <p id="load" role="status">Loading the NASA POWER record…</p>
       <noscript
         >Enable JavaScript for the comparison or read the
@@ -33,6 +34,8 @@
       >
       <div id="work" hidden>
         <div class="controls">
+          <label>First city<select id="first"></select></label>
+          <label>Second city<select id="second"></select></label>
           <label>Comparison period<select id="period"></select></label>
           <label>Inspect month<select id="month"></select></label>
           <label class="switch"
@@ -45,8 +48,8 @@
             <h2 id="plot-title">Solar energy through the year</h2>
             <p id="period-note"></p>
             <div class="legend">
-              <span><i class="west"></i>Langley, BC</span
-              ><span><i class="east"></i>Halifax, NS</span
+              <span><i class="west"></i><b id="first-legend"></b></span
+              ><span><i class="east"></i><b id="second-legend"></b></span
               ><span id="marker-key"
                 ><i class="cap"></i>Clear-sky estimate</span
               >
@@ -63,14 +66,14 @@
             <h2 id="chosen"></h2>
             <p class="measure">Mean daily energy · kWh/m²/day</p>
             <div class="city">
-              <h3><i class="west"></i> Langley <small>BC</small></h3>
-              <strong id="langley"></strong>
-              <p class="reference" id="langley-ref"></p>
+              <h3><i class="west"></i> <a id="first-profile"></a></h3>
+              <strong id="first-energy"></strong>
+              <p class="reference" id="first-energy-ref"></p>
             </div>
             <div class="city">
-              <h3><i class="east"></i> Halifax <small>NS</small></h3>
-              <strong id="halifax"></strong>
-              <p class="reference" id="halifax-ref"></p>
+              <h3><i class="east"></i> <a id="second-profile"></a></h3>
+              <strong id="second-energy"></strong>
+              <p class="reference" id="second-energy-ref"></p>
             </div>
             <p id="difference" aria-live="polite"></p>
           </section>

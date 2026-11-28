@@ -1,7 +1,7 @@
 {
   "id": "sunledger",
   "title": "Sun Ledger",
-  "description": "Compare the solar energy reaching Langley and Halifax by month and year, alongside NASA’s clear-sky estimate.",
+  "description": "Compare monthly solar energy in six Canadian cities, see how winter compares with summer and explore NASA’s clear-sky estimates.",
   "category": "field-kit",
   "tags": [
     "solar energy",
@@ -9,7 +9,11 @@
     "Langley",
     "Halifax",
     "sunlight",
-    "climate"
+    "climate",
+    "Calgary",
+    "Winnipeg",
+    "Toronto",
+    "Montréal"
   ],
   "icon": "lightbulb",
   "url": "/sunledger/",
@@ -18,7 +22,7 @@
   "access": "browser",
   "data_info": {
     "mode": "snapshot",
-    "detail": "NASA POWER supplies monthly all-sky and clear-sky solar energy for grid areas around Langley, BC, and Halifax, NS.",
+    "detail": "NASA POWER provides monthly all-sky and clear-sky solar energy for grid areas around Langley, Calgary, Winnipeg, Toronto, Montréal and Halifax.",
     "cadence": "Monthly",
     "probes": [
       {
@@ -45,5 +49,9 @@
         ]
       }
     ]
+  },
+  "result_directory": {
+    "path": "cities/",
+    "title": "Monthly solar energy profiles for six Canadian cities"
   }
 }

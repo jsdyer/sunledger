@@ -13,7 +13,15 @@ from urllib.request import Request, urlopen
 OUT = Path(__file__).resolve().parents[1] / 'web/data/solar.json'
 API = 'https://power.larc.nasa.gov/api/temporal/monthly/point'
 FIELDS = ('ALLSKY_SFC_SW_DWN', 'CLRSKY_SFC_SW_DWN')
-PLACES = {'Langley': (49.15, -122.66), 'Halifax': (44.65, -63.58)}
+# Keep the original two column pairs first for existing snapshot consumers.
+PLACES = {
+    'Langley': ('langley', 'British Columbia', 49.15, -122.66),
+    'Halifax': ('halifax', 'Nova Scotia', 44.65, -63.58),
+    'Winnipeg': ('winnipeg', 'Manitoba', 49.90, -97.14),
+    'Calgary': ('calgary', 'Alberta', 51.05, -114.07),
+    'Montréal': ('montreal', 'Quebec', 45.50, -73.57),
+    'Toronto': ('toronto', 'Ontario', 43.65, -79.38),
+}
 START = 2001
 
 
@@ -60,13 +68,13 @@ def extract(source, lat, lon, today):
 
 def build_edition(today):
     sources, series = {}, []
-    for place, (lat, lon) in PLACES.items():
+    for place, (slug, province, lat, lon) in PLACES.items():
         url = API + '?' + urlencode(dict(parameters=','.join(FIELDS), community='RE', longitude=lon,
                                           latitude=lat, start=START, end=today.year, format='JSON'))
         response = fetch(url)
-        sources[place] = {'url': url, 'datasets': response['header']['sources'], 'latitude': lat, 'longitude': lon}
+        sources[place] = {'slug': slug, 'province': province, 'url': url, 'datasets': response['header']['sources'], 'latitude': lat, 'longitude': lon}
         series.append(extract(response, lat, lon, today))
-    common = sorted(series[0].keys() & series[1].keys())
+    common = sorted(set.intersection(*(set(site) for site in series)))
     baseline = {f'{year}-{month:02}' for year in range(2001, 2021) for month in range(1, 13)}
     if not baseline.issubset(common):
         raise ValueError('The complete 2001–2020 comparison period is required')
@@ -78,8 +86,8 @@ def build_edition(today):
     return {'retrieved': today.isoformat(), 'start': common[0] + '-01',
             'end': date(last_year, last_month, monthrange(last_year, last_month)[1]).isoformat(),
             'count': len(common), 'unit': 'kWh/m²/day', 'sources': sources,
-            'columns': ['month', 'langley_all', 'langley_clear', 'halifax_all', 'halifax_clear'],
-            'rows': [[month, *series[0][month], *series[1][month]] for month in common]}
+            'columns': ['month', *(f'{slug}_{sky}' for slug, *_ in PLACES.values() for sky in ('all', 'clear'))],
+            'rows': [[month, *(value for site in series for value in site[month])] for month in common]}
 
 
 if __name__ == '__main__':

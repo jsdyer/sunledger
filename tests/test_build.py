@@ -4,6 +4,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from xml.etree import ElementTree as ET
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from build import ROOT, build, metadata
 
@@ -33,6 +34,22 @@ class BuildTests(unittest.TestCase):
         self.assertIn('href="./style.css"', page)
         self.assertFalse((self.root / "dist/private.txt").exists())
         self.assertTrue((self.root / "dist/.nojekyll").exists())
+
+    def test_generated_city_pages_match_snapshot_and_sitemap(self):
+        build(self.root)
+        dist = self.root / 'dist'
+        data = json.loads((dist / 'data/solar.json').read_text())
+        urls = {e.text for e in ET.parse(dist / 'sitemap.xml').findall('.//{*}loc')}
+        directory = (dist / 'cities/index.html').read_text()
+        for name, site in data['sources'].items():
+            path = 'cities/' + site['slug'] + '/'
+            page = (dist / path / 'index.html').read_text()
+            self.assertIn('href="./' + site['slug'] + '/"', directory)
+            self.assertIn('https://coolcode.ca/sunledger/' + path, urls)
+            self.assertIn('first=' + site['slug'], page)
+            self.assertIn('Monthly solar energy in ' + name, page)
+            self.assertEqual(page.count('<th scope="row">'), 12)
+        self.assertEqual(len(urls), len(data['sources']) + 1)
 
     def test_url_matches_tool_id(self):
         self.edit(url="/different/")
